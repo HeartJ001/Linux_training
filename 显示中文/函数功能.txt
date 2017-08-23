@@ -1,0 +1,97 @@
+获取framebuffer设备信息.ioctl(int fb,FBIOGET_FSCREENINFO,&finfo);
+
+       ioctl函数是实现对设备的信息获取和设定，第一个参数为文件描述符，第二个参数为具体设备的参数，对于framebuffer,参数在linux/fb.h中定义的。
+
+      #define FBIOGET_VSCREENINFO 0x4600   //获取设备无关的数据信息fb_var_screeninfo
+      #define FBIOPUT_VSCREENINFO 0x4601   //设定设备无关的数据信息
+      #define FBIOGET_FSCREENINFO 0x4602   //获取设备无关的常值信息fb_fix_screeninfo
+      #define FBIOGETCMAP  0x4604        //获取设备无关颜色表信息
+      #define FBIOPUTCMAP  0x4605       //设定设备无关颜色表信息
+      #define FBIOPAN_DISPLAY  0x4606
+      #define FBIO_CURSOR            _IOWR('F', 0x08, struct fb_cursor)
+
+      第三个参数是存放信息的结构体或者缓冲区
+
+内存映射 mmap函数。头文件：sys/mman.h .常用用法：mmap(0,screensize,PROT_RD　｜PROT_WR,MAP_SHARED,int fb,0)返回映射的首地址。
+mmap是一种内存映射文件的方法，即将一个文件或者其它对象映射到进程的地址空间，实现文件磁盘地址和进程虚拟地址空间中一段虚拟地址的一一对映关系。实现这样的映射关系后，进程就可以采用指针的方式读写操作这一段内存，而系统会自动回写脏页面到对应的文件磁盘上，即完成了对文件的操作而不必再调用read,write等系统调用函数。相反，内核空间对这段区域的修改也直接反映用户空间，从而可以实现不同进程间的文件共享。
+
+函数原型
+
+void *mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
+
+返回说明
+
+成功执行时，mmap()返回被映射区的指针。失败时，mmap()返回MAP_FAILED[其值为(void *)-1]， error被设为以下的某个值：
+ 1 EACCES：访问出错
+ 2 EAGAIN：文件已被锁定，或者太多的内存已被锁定
+ 3 EBADF：fd不是有效的文件描述词
+ 4 EINVAL：一个或者多个参数无效
+ 5 ENFILE：已达到系统对打开文件的限制
+ 6 ENODEV：指定文件所在的文件系统不支持内存映射
+ 7 ENOMEM：内存不足，或者进程已超出最大内存映射数量
+ 8 EPERM：权能不足，操作不允许
+ 9 ETXTBSY：已写的方式打开文件，同时指定MAP_DENYWRITE标志
+10 SIGSEGV：试着向只读区写入
+11 SIGBUS：试着访问不属于进程的内存区
+
+参数
+
+start：映射区的开始地址
+
+length：映射区的长度
+
+prot：期望的内存保护标志，不能与文件的打开模式冲突。是以下的某个值，可以通过or运算合理地组合在一起
+1 PROT_EXEC ：页内容可以被执行
+2 PROT_READ ：页内容可以被读取
+3 PROT_WRITE ：页可以被写入
+4 PROT_NONE ：页不可访问
+
+flags：指定映射对象的类型，映射选项和映射页是否可以共享。它的值可以是一个或者多个以下位的组合体
+ 1 MAP_FIXED //使用指定的映射起始地址，如果由start和len参数指定的内存区重叠于现存的映射空间，重叠部分将会被丢弃。如果指定的起始地址不可用，操作将会失败。并且起始地址必须落在页的边界上。
+ 2 MAP_SHARED //与其它所有映射这个对象的进程共享映射空间。对共享区的写入，相当于输出到文件。直到msync()或者munmap()被调用，文件实际上不会被更新。
+ 3 MAP_PRIVATE //建立一个写入时拷贝的私有映射。内存区域的写入不会影响到原文件。这个标志和以上标志是互斥的，只能使用其中一个。
+ 4 MAP_DENYWRITE //这个标志被忽略。
+ 5 MAP_EXECUTABLE //同上
+ 6 MAP_NORESERVE //不要为这个映射保留交换空间。当交换空间被保留，对映射区修改的可能会得到保证。当交换空间不被保留，同时内存不足，对映射区的修改会引起段违例信号。
+ 7 MAP_LOCKED //锁定映射区的页面，从而防止页面被交换出内存。
+ 8 MAP_GROWSDOWN //用于堆栈，告诉内核VM系统，映射区可以向下扩展。
+ 9 MAP_ANONYMOUS //匿名映射，映射区不与任何文件关联。
+10 MAP_ANON //MAP_ANONYMOUS的别称，不再被使用。
+11 MAP_FILE //兼容标志，被忽略。
+12 MAP_32BIT //将映射区放在进程地址空间的低2GB，MAP_FIXED指定时会被忽略。当前这个标志只在x86-64平台上得到支持。
+13 MAP_POPULATE //为文件映射通过预读的方式准备好页表。随后对映射区的访问不会被页违例阻塞。
+14 MAP_NONBLOCK //仅和MAP_POPULATE一起使用时才有意义。不执行预读，只为已存在于内存中的页面建立页表入口。
+
+fd：有效的文件描述词。如果MAP_ANONYMOUS被设定，为了兼容问题，其值应为-1
+
+offset：被映射对象内容的起点
+
+
+
+
+
+fstatat - 得到相对文件的状态到一个目录文件描述符
+定义函数 int fstat(int fildes,struct stat *buf);
+函数说明 fstat()用来将参数fildes所指的文件状态，复制到参数buf所指的结构中(struct stat)。
+
+在写应用程序的时候发现我们经常回去检测一个文件的大小，有了大小才能映射这个文件到内存上，方便我们直接操作。
+在介绍三者的区别之前，首先介绍的是一个非常重要的结构体类型，名字叫做struct stat,这是一个保存文件状态信息的结构体，其类型如下：
+
+struct stat 
+{ 
+    dev_t     st_dev;     /* 文件所在设备的标识  */ 
+     ino_t     st_ino;     /* 文件结点号  */ 
+   mode_t    st_mode;    /* 文件保护模式  */ 
+   nlink_t   st_nlink;   /* 硬连接数  */ 
+   uid_t     st_uid;     /* 文件用户标识  */ 
+   gid_t     st_gid;     /* 文件用户组标识  */ 
+   dev_t     st_rdev;    /* 文件所表示的特殊设备文件的设备标识  */ 
+   off_t     st_size;    /* 总大小，字节为单位  */ 
+   blksize_t st_blksize; /* 文件系统的块大小  */ 
+   blkcnt_t  st_blocks;  /* 分配给文件的块的数量，512字节为单元  */ 
+   time_t    st_atime;   /* 最后访问时间  */ 
+   time_t    st_mtime;   /* 最后修改时间  */ 
+   time_t    st_ctime;   /* 最后状态改变时间  */ 
+}; 
+
+

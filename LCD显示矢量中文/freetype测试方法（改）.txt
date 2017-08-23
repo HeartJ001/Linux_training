@@ -1,0 +1,17 @@
+1.交叉编译:
+tar xjf freetype-2.4.10.tar.bz2 
+./configure --host=arm-linux
+make
+make DESTDIR=$PWD/tmp install
+
+2.编译出来的文件放入（tmp中的所有）
+/work/tools/gcc-3.4.5-glibc-2.3.6/arm-linux
+
+3.然后复制一份tmp到nfs_root中
+然后挂载板子
+将/work/nfs_root/tmp/usr/local下的所有文件拷贝到板子根目录下
+cp * / -rfd
+4.然后对测试文件进行编译
+arm-linux-gcc -finput-charset=GBK -o example1 example1.c  -lfreetype -lm
+5.将编译好的文件与simsun.ttc放入同一路径下
+执行./example1 ./simsun.ttc

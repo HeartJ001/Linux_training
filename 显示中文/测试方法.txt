@@ -1,0 +1,21 @@
+英文字母、汉字的点阵显示
+测试:
+1. 配置、修改内核支持把lcd.c编译进去
+cp /work/drivers_and_test_new/10th_lcd/lcd.c drivers/video/
+修改drivers/video/Makefile
+#obj-$(CONFIG_FB_S3C2410)         += s3c2410fb.o
+obj-$(CONFIG_FB_S3C2410)          += lcd.o
+
+nfs 32000000 192.168.1.123:/work/nfs_root/uImage; bootm 32000000
+
+set bootargs console=ttySAC0,115200 root=/dev/nfs nfsroot=192.168.1.123:/work/nfs_root/fs_mini_mdev_new ip=192.168.1.17
+nfs 32000000 192.168.1.123:/work/nfs_root/uImage_tq2440; bootm 32000000
+nfs 32000000 192.168.1.123:/work/nfs_root/uImage_mini2440; bootm 32000000
+
+
+
+
+1：修改inittab
+vi /etc/inittab
+增加一行
+tty1::askfirst:-/bin/sh
